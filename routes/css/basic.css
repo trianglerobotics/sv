@@ -1,0 +1,90 @@
+<style>
+      .api-docs {
+        color: red;
+        word-wrap: break-word;
+        font-family: sans-serif;
+        flex-direction: column;
+        background-color: #2a2f37; /* Equivalent to Tailwind's bg-gray-900 */
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100%;
+      }
+
+      .container {
+        display: flex;
+        flex-direction: column;
+        /* margin: 0.5rem; */
+        width: 100%; /* Restricting the width */
+        max-width: 600px; /* Maximum width */
+        height: auto; /* Adjust the height */
+        overflow-y: auto; /* Enable vertical scrolling if content overflows */
+        background: white; /* Slightly lighter background for the container */
+        color:black;
+        padding-right: 8%;
+        padding-left: 8%;
+        /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.5); */
+        .image-div {
+            padding: 0px;
+            margin: 0px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1rem;
+        }
+      }
+
+      h1, h2, h3, h4, h5, h6 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+
+      .hljs {
+        display: block;
+        color: rgb(255, 255, 255);
+        overflow-x: auto;
+        padding: 0.5em;
+        color: black;
+        background: #eeeeee;
+        border-radius: 0.375rem;
+      }
+
+      /* Ensuring the text and headings fit within the restricted width */
+      p, pre, code {
+        max-width: 100%;
+        /* margin-left: 10%; */
+        margin-top: 5%;
+        margin-bottom: 0%;
+        word-wrap: break-word;
+        font-family: Arial, Helvetica, sans-serif;
+        /* font-family: 'Gill Sans', 'Gill Sans MT', Calibri, 'Trebuchet MS', sans-serif; */
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+
+      img{
+        width: 95%;
+        /* margin-top : 0.5rem; */
+        border-radius: 5px;
+      }
+
+      .wrapper {
+        background-color: #3e3e4c;
+        padding: 0.5rem;
+        border-radius: 0.2rem;
+      }
+
+      .add-comment {
+        background-color: #eeeeee;
+        color: black;
+        padding-left: 0.5rem;
+        padding-right: 0.5rem;
+        padding-top: 0.5rem;
+        width: 100%; /* Restricting the width */
+        height: auto;
+        max-width: 600px; /* Maximum width */
+        flex-grow: 1; /* This allows .add-comment to grow and take up the remaining space */
+        overflow-y: auto; /* Enable scrolling if content overflows */
+      }
+
+    </style>

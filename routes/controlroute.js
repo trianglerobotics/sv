@@ -179,7 +179,7 @@ const executeUpdate = async (savePath) => {
 const removefolders = async () => {
   try {
     // Run the chmod command to set permissions to 777
-    const command_chmod = `rm -rf ${home}/server/ui_dep && rm -rf ${home}/server/sv_dep`;
+    const command_chmod = `rm -rf ${home}/server/ui_host/build && rm -rf ${home}/server/sv_host`;
     const { stdout, stderr } = await execAsync(command_chmod);
 
     // Check for any stderr output

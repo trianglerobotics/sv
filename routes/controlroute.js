@@ -2,7 +2,7 @@ import express from 'express';
 import wifi from 'node-wifi';
 import disk from 'diskusage';
 import { exec } from 'child_process';
-//import fs from 'fs';
+import WebSocket from 'ws';
 import https from 'https';
 import http from 'http';
 import os from 'os';
@@ -157,22 +157,30 @@ const changePermissions = async (savePath) => {
   }
 };
 
-const executeUpdate = async (savePath) => {
+const executeUpdate = async (target,version) => {
   try {
-    // Run the chmod command to set permissions to 777
-    const command_chmod = `${savePath}`;
-    const { stdout, stderr } = await execAsync(command_chmod);
+    let { stdout, stderr } = await execAsync(`cd ${home}/server/${target} && git pull origin main`);
 
-    // Check for any stderr output
+    console.log(`cd ${home}/server/${target} && git pull origin main`)
+    // Log the outputs
+    console.log('Finished');
+    console.log("Standard Output:", stdout);
+
+    // Check if there is any error output
     if (stderr) {
-      console.error(`stderr: ${stderr}`);
-      return;
+      console.error("Standard Error:", stderr);
     }
 
-    console.log(`stdout: ${stdout}`);
-    console.log('update executed successfully.');
+    // Simple success check based on the presence of certain words in stdout
+    if (stdout.includes("Already up to date") || stdout.includes("Updating")) {
+      console.log("Git pull executed successfully!");
+    } else {
+      console.log("Git pull might have encountered an issue.");
+    }
+
   } catch (error) {
-    console.error(`Error update ${error.message}`);
+    // In case the command fails (e.g., Git not found, directory not existing)
+    console.error("Error executing git pull:", error);
   }
 };
 
@@ -257,6 +265,20 @@ router.get('/api/control/disk', async (req, res) => {
   }
 });
 
+//Watch the file changes
+const wssupdate = new WebSocket.Server({ port: 1124 });
+wssupdate.on('connection', ws => {
+  });
+
+function broadcast(message) {
+wssupdate.clients.forEach(client => {
+    if (client.readyState === WebSocket.OPEN) {
+    client.send(message);
+    }
+});
+}
+
+
 router.get('/api/control/update', async (req, res) => {
 
   console.log('update');
@@ -268,13 +290,19 @@ router.get('/api/control/update', async (req, res) => {
 
   (async () => {
     try {
-      await downloadFile(fileUrl, savePath);
-      await changePermissions(savePath);
+      broadcast('update examples');
+      await executeUpdate('examples');
 
-      await removefolders();
+      broadcast('update models');
+      await executeUpdate('models');
 
-      await executeUpdate(savePath);
+      broadcast('update ui_host');
+      await executeUpdate('ui_host');
 
+      broadcast('update sv_host');
+      await executeUpdate('sv_host');
+
+      broadcast('finished');
       console.log('Update complete.');
 
       // Now you can run the update script

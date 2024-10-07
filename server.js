@@ -77,8 +77,7 @@ const io = new Server(server, {
   });
 
 const allowedOrigins = [
-  'http://121.184.63.113:3000',
-  'http://192.168.12.1:3000'
+  'http://121.184.63.113:3000'
 ];
   
 app.use(cors({
@@ -98,13 +97,6 @@ app.use(cors({
   credentials: true,          // Allow credentials (cookies, authorization headers, etc.)
   optionsSuccessStatus: 200   // For legacy browser support
 }));
-
-// app.use(cors({
-//   origin: "http://121.184.63.113:3000", // 접근 권한을 부여하는 도메인
-//   credentials: true, // 응답 헤더에 Access-Control-Allow-Credentials 추가
-//   optionsSuccessStatus: 200, // 응답 상태 200으로 설정
-// }));
-
 
 console.log("started");
 
@@ -197,7 +189,7 @@ app.post('/depth', (req, res) => {
 
 app.get('/stop', (req, res) => {
 
-  const destIP = '192.168.12.1';
+  const destIP = '121.184.63.113';
   const destPort = 22222;
   //send udp signal to stop
   const message = Buffer.from('45455009');

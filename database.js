@@ -19,10 +19,10 @@ export async function getDatabases() {
     }
 
 export async function addUserProjNames(projectName, exampleType, initsection) {
-    const insertQuery = "INSERT INTO Projects (Name, Type, section, subsection,func) VALUES (?, ?, ?, ?, ?)";
+    const insertQuery = "INSERT INTO Projects (Name, Type, dbtype, section, subsection,func) VALUES (?,?, ?, ?, ?, ?)";
     const typeQuery = "SELECT func FROM Examples WHERE Name = ?";
     const [type] = await pool.query(typeQuery, [exampleType]);
-    const [result] = await pool.query(insertQuery, [projectName, exampleType, initsection, initsection, parseInt(type[0].func, 10)]);
+    const [result] = await pool.query(insertQuery, [projectName, exampleType, exampleType, initsection, initsection, parseInt(type[0].func, 10)]);
     return result
 }
 
@@ -32,9 +32,9 @@ export async function updateProjectSection(projectName, section, subsection) {
     return result
 }
 
-export async function addProj(projectName, projectType,databasetype) {
+export async function addProj(projectName, projectType , databasetype) {
     const projtype = 'database';
-    const [result] = await pool.query("INSERT INTO Projects (Name,func,dbtype,Type) values(?,?,?,?)",[projectName,projectType,databasetype,projtype]);
+    const [result] = await pool.query("INSERT INTO Projects (Name,func,dbtype,Type) values(?,?,?,?)",[projectName,projectType,databasetype,databasetype]);
     return result
 }
 
@@ -56,8 +56,16 @@ export async function getUserProjects() {
 export async function deleteUserProject(projectname) {
     const [result] = await pool.query("DELETE FROM Projects WHERE Name = ?", [projectname]);
     const [result2] = await pool.query("DELETE FROM Classes WHERE project = ?", [projectname]);
+    const [result3] = await pool.query("DELETE FROM YoloImage WHERE project = ?", [projectname]);
+    const [result4] = await pool.query("DELETE FROM YoloBoxes WHERE projectname = ?", [projectname]);
     return result;
   }
+
+export async function deleteimage(projectname,imagename) {
+    const [result] = await pool.query("DELETE FROM YoloImage WHERE Name = ? and project = ?", [imagename,projectname]);
+    const [result2] = await pool.query("DELETE FROM YoloBoxes WHERE Name = ? and projectname = ?", [imagename,projectname]);
+    return result;
+}
 
 export async function getExamples() {
     const [rows] = await pool.query("SELECT * FROM Examples")
@@ -93,6 +101,24 @@ export async function importModel(projectname, model) {
     const [result] = await pool.query("UPDATE Projects SET imported = 1 WHERE Name = ?", [projectname]);
     return result
 }
+
+export async function generateDatasets(projectname) {
+    const [result] = await pool.query("UPDATE Projects SET genstatus = 1 WHERE Name = ?", [projectname]);
+    //const [result] = await pool.query("UPDATE Projects SET imported = 1 WHERE Name = ?", [projectname]);
+    return result
+}
+
+export async function resetgenerateDatasets(projectname) {
+    const [result] = await pool.query("UPDATE Projects SET genstatus = 0 WHERE Name = ?", [projectname]);
+    //const [result] = await pool.query("UPDATE Projects SET imported = 1 WHERE Name = ?", [projectname]);
+    return result
+}
+
+export async function checkGenerated(projectname) {
+    const [rows] = await pool.query("SELECT genstatus FROM Projects WHERE Name = ?", [projectname]);
+    return rows
+}
+
 
 export async function resetModel(projectname, model) {
     const [result] = await pool.query("UPDATE Projects SET imported = NULL WHERE Name = ?", [projectname]);
@@ -141,9 +167,20 @@ export async function addClass(classname,projectname,randomColor)
     const rows = await pool.query("insert into Classes (project,Name,color) values (?,?,?)",[projectname,classname,randomColor])
 }
 
-export async function addBoxes(Name,x,y,w,h,classname,color ,num)
+export async function addBoxes(Name,x,y,w,h,classname,color ,num , projectname)
 {
-    const rows = await pool.query("insert into YoloBoxes (Name,x,y,w,h,class,color,num) values (?,?,?,?,?,?,?,?)",[Name,x,y,w,h,classname,color,num])
+    const rows = await pool.query("insert into YoloBoxes (Name,x,y,w,h,class,color,num,projectname) values (?,?,?,?,?,?,?,?,?)",[Name,x,y,w,h,classname,color,num,projectname])
+}
+
+export async function delBoxes(Name,project,num,cls)
+{
+    const rows = await pool.query("delete from YoloBoxes where Name=? and projectname=? and num=? and class=?",[Name,project,num,cls])
+}
+
+export async function addImage(Name,projectname)
+{
+    console.log('try to addImage',Name,projectname)
+    const rows = await pool.query("insert into YoloImage (Name,project) values (?,?)",[Name,projectname])
 }
 
 //get boxes
@@ -153,14 +190,25 @@ export async function getBoxes(Name)
     return rows
 }
 
-export async function updateBoxes(Name,x,y,w,h,classname,color,num)
+export async function getBoxesByClass(imagename,classname)
+{
+    const [rows] = await pool.query("select x,y,w,h from YoloBoxes where Name=? and class=? ORDER BY num ASC", [imagename,classname])
+    return rows
+}
+
+export async function updateBoxes(Name,x,y,w,h,classname,color,num,projectname)
 {
     const [rows] = await pool.query("update YoloBoxes set x=?,y=?,w=?,h=?,class=?,color=? where Name=? and num=?",[x,y,w,h,classname,color,Name,num])
 }
 
-export async function delClass(classname,projectname)
+export async function delClass(classname,projectname,dbtype)
 {
     const rows = await pool.query("delete from Classes where Name=? and project=?",[classname,projectname])
+    console.log('dbtype',dbtype)
+    if(dbtype == 'objectdetection')
+    {
+        const rows = await pool.query("delete from YoloBoxes where class=? and projectname=?",[classname,projectname])
+    }
 }
 
 export async function checkClassExist(classname,projectname)

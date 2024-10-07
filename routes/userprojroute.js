@@ -1,6 +1,6 @@
 import express from 'express';
 
-import { getUserProjects,deleteUserProject,setModel,getUserModel,checkImported, importModel, resetModel,addProj,saveUserModel,updateProjectSection} from '../database.js';
+import { getUserProjects,deleteUserProject,setModel,getUserModel,checkImported, importModel, resetModel,addProj,saveUserModel,updateProjectSection, checkGenerated,resetgenerateDatasets,deleteimage} from '../database.js';
 import {copyAndRenameFolder,copyFilesAndFolders,deleteFilesAndFoldersExceptData,copyAndSaveFile} from '../filecontrol.js';  
 import fs from 'fs';
 import path  from 'path';
@@ -110,6 +110,17 @@ router.get('/api/user/project/check/imported/:projectname', async (req, res) => 
   }
 });
 
+router.get('/api/user/project/check/generated/:projectname', async (req, res) => { 
+  try {
+    const {projectname} = req.params;
+    const generated = await checkGenerated(projectname);
+    console.log('generated',generated);
+    res.json(generated);
+  } catch (error) {
+    
+  }
+});
+
 router.post('/api/user/project/import/model', async (req, res) => {
   try {
     const { projectname, model } = req.body;
@@ -148,6 +159,7 @@ router.post('/api/user/project/reset/model', async (req, res) => {
     deleteFilesAndFoldersExceptData(destination);
 
     resetModel(projectname, model);
+    resetgenerateDatasets(projectname);
     res.status(200).json({ message: 'Model Reset successfully' });
   } catch (error) {
     console.error('Error fetching notes:', error);
@@ -263,6 +275,40 @@ router.post('/api/user/project/delete/file', (req, res) => {
   }
 });
 
+router.post('/api/user/project/delete/image', (req, res) => {
+  try {
+    const { project, Name} = req.body;
+    const filePath = path.join(home, 'server', 'projects', project, 'databases','data', Name);
+    console.log('delete image',filePath);
+
+    //delete image file
+
+    fs.access(filePath, fs.constants.F_OK, (err) => {
+      if (err) {
+        console.error('File does not exist:', err);
+        return res.status(404).json({ error: 'File not found' });
+      }
+
+      fs.unlink(filePath, (err) => {
+        if (err) {
+          console.error('Error deleting file:', err);
+          return res.status(500).json({ error: 'Internal Server Error' });
+        }
+        console.log('File deleted successfully:', filePath);
+        res.status(200).json({ message: 'File deleted successfully' });
+      });
+    });
+
+    //delete image,boxes from the database
+    deleteimage(project,Name);
+
+  }
+  catch (error) {
+    console.error('Error handling file deletion:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 router.post('/api/user/project/file-content', async (req, res) => {
   try {
       const { userprojname, userchapter, selectedFile  } = req.body;
@@ -300,10 +346,18 @@ router.post('/api/user/project/save-file-content', async (req, res) => {
 
 
 router.post('/api/user/model/save', async (req, res) => {
-  const {projectname,filename,uuid,newname} = req.body;
+  const {projectname,filename,uuid,newname,dbtype} = req.body;
 
+  let source;
   //save model to the models/usermodel/uuid.pth
-  const source = path.join(home, 'server','projects', projectname, 'databases', 'checkpoints', filename);
+  if(dbtype === 'classification')
+  {
+    source = path.join(home, 'server','projects', projectname, 'databases', 'checkpoints', filename);
+  }
+  else if(dbtype === 'objectdetection')
+  {
+    source = path.join(home, 'server','projects', projectname, 'databases', 'checkpoints', 'train', 'weights', filename);
+  }
   const destination = path.join(home, 'server', 'models', 'usermodels', `${uuid}.pth`);
 
   const model = await getUserModel(projectname);

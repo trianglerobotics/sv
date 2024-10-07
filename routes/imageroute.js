@@ -5,7 +5,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import WebSocket from 'ws';
 import chokidar from 'chokidar';
-import { getDatabases } from '../database.js'; // 확장자 .js 추가
+import { getDatabases,addImage } from '../database.js'; // 확장자 .js 추가
 import router from './databaseroute.js';
 import os from 'os';
 
@@ -15,12 +15,17 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Define the path to the Python script
-const pythonScriptPath = path.resolve(__dirname, '../python/stream.py');
+let pythonScriptPath = path.resolve(__dirname, '../python/stream.py');
 
-function startPythonScript() {
+function startPythonScript(dbtype) {
     if(pythonProcess) {
         //console.log('Python script is already running');
         return;
+    }
+
+    if(dbtype === 'objectdetection')
+    {
+        pythonScriptPath = path.resolve(__dirname, '../python/stream_yolo.py');
     }
 
     pythonProcess = spawn('python3', [pythonScriptPath]);
@@ -51,11 +56,15 @@ function stopPythonScript() {
     }
 }
 
-router.get('/api/image/stream-start', (req, res) => {
+router.get('/api/image/stream-start/:dbtype', (req, res) => {
+
+    const {dbtype} = req.params;
+    console.log(dbtype);
     if (pythonProcess) {
         res.status(400).json({ success: false, message: 'Python script is already running' });
     } else {
-        startPythonScript();
+        startPythonScript(dbtype);
+
         res.json({ success: true, message: 'Python script started' });
     }
 });
@@ -149,30 +158,32 @@ router.post('/api/image/save/image', (req, res) => {
     const project = req.body.project;
     const classid = req.body.classid;
     const savetype = req.body.savetype;
+    const dbtype = req.body.dbtype;
     const home = os.homedir();
     if (!image) {
         return res.status(400).json({ success: false, message: 'Image data is required' });
     }
     //console.log("try to save2")
+    const imagename = `image_${Date.now()}.jpg`;
     const buffer = Buffer.from(image, 'base64'); // Decode base64 image
-    const filePath = path.join(home ,'server' ,'projects',req.body.project,'databases','data',req.body.classid, `image_${Date.now()}.jpg`); // Create a unique file name
-    console.log(filePath);
-    // fs.mkdir(path.join(__dirname,'..','..','datasets'), { recursive: true }, (err) => {
-    //   if (err) {
-    //     console.error('Error creating directory:', err);
-    //     return res.status(500).json({ success: false, message: 'Error creating directory' });
-    //   }
+    const filePath = path.join(home ,'server' ,'projects',req.body.project,'databases','data',req.body.classid, imagename); // Create a unique file name
 
-      // Write the image to the file
       fs.writeFile(filePath, buffer, (err) => {
         if (err) {
           console.error('Error saving image:', err);
           return res.status(500).json({ success: false, message: 'Error saving image' });
         }
-
+        if(dbtype == 'objectdetection')
+        {
+            console.log(imagename,'dfdfdfdfd')
+            addImage(imagename,project);
+        }
+        //save to database
         res.json({ success: true, message: 'Image saved successfully', filePath });
       });
-    // });
+
+
+
 });
 
 

@@ -6,7 +6,7 @@ import os from 'os'
 const router = express.Router();
 const home = os.homedir();
 // const { getNotes } =  require('../database.js');
-import { getDatabases, getClasses , checkClassExist, addClass, delClass , getModels,  getImages, addBoxes,getBoxes,updateBoxes,
+import { getDatabases, getClasses , checkClassExist, addClass, delClass , getModels,  getImages, addBoxes,getBoxes,updateBoxes, delBoxes,
   setWorkingDirectory,checkUserModelExist,getUserTrainedModels,deleteUserTrainedModels ,getTrainedModelsUUID, getWorkingDirectory } from '../database.js';
 
 router.get('/')
@@ -169,16 +169,23 @@ router.post('/api/db/classes/add/:projectname', async (req, res) => {
 
 
 router.post('/api/db/boxes/add', async (req, res) => {
-  const { Name, x, y, w, h, classname, color, num } = req.body;
-  console.log(Name, x, y, w, h, classname, color, num);
-  addBoxes(Name, x, y, w, h, classname, color, num);
+  const { Name, x, y, w, h, classname, color, num,projectname } = req.body;
+  console.log(Name, x, y, w, h, classname, color, num,projectname);
+  addBoxes(Name, x, y, w, h, classname, color, num, projectname);
   res.status(200).json({ message: 'box successfully added' });
 });
 
+router.post('/api/db/boxes/delete', async (req, res) => {
+  const { Name, project, num, cls} = req.body;
+  console.log(Name, project, num, cls);
+  delBoxes(Name, project, num, cls);
+  res.status(200).json({ message: 'box successfully deleted' });
+});
+
 router.post('/api/db/boxes/update', async (req, res) => {
-  const { Name, x, y, w, h, classname, color, num } = req.body;
-  console.log(Name, x, y, w, h, classname, color, num);
-  updateBoxes(Name, x, y, w, h, classname, color, num);
+  const { Name, x, y, w, h, classname, color, num,projectname } = req.body;
+  console.log(Name, x, y, w, h, classname, color, num,projectname);
+  updateBoxes(Name, x, y, w, h, classname, color, num,projectname);
   res.status(200).json({ message: 'box successfully updated' });
 });
 
@@ -205,7 +212,7 @@ router.post('/api/db/classes/del/:projectname', async (req, res) => {
   for (let i = 0; i < Name.length; i++) {
     const value = Name[i];
     console.log(value.Name);
-    delClass(value.Name,projectname);
+    delClass(value.Name,projectname,dbtype);
 
     //Delete folder to the target path
     if(dbtype == 'classification')

@@ -60,7 +60,7 @@ const app = express();
 const server = http.createServer(app);
 const port = 4000;
 
-const version = 1.1;
+const version = 1.0;
 
 import { fileURLToPath } from 'url';
 
